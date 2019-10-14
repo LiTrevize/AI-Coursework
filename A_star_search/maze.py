@@ -170,5 +170,3 @@ if __name__ == "__main__":
     Solution = MazeProblem(maze_file='maze.txt')
     searchmap = Solution.Astar()
     Solution.drawMap(searchmap, show=True)
-    # a = np.array([[1,2],[3,4]])
-    # print(a[(0,1)])
