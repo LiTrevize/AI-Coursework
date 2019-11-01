@@ -2,17 +2,45 @@ import math
 
 global maxDepth
 global N
+INF = 100
 
 
-def valid(r, c):
-    if 1 <= r <= N and 1 <= c <= N:
-        return True
-    return False
+def childStates(r1,c1,r2,c2,turn1):
+    validMove = []
+    if turn1:
+        if 1 <= r1+1 <= N and 1 <= c1 <= N:
+            validMove.append((r1+1,c1,r2,c2))
+        if 1 <= r1-1 <= N and 1 <= c1 <= N:
+            validMove.append((r1-1, c1, r2, c2))
+        if 1 <= r1 <= N and 1 <= c1+1 <= N:
+            validMove.append((r1, c1+1, r2, c2))
+        if 1 <= r1 <= N and 1 <= c1-1 <= N:
+            validMove.append((r1, c1-1, r2, c2))
+    else:
+        if 1 <= r2+1 <= N and 1 <= c2 <= N:
+            validMove.append((r1, c1, r2+1, c2))
+        if 1 <= r2-1 <= N and 1 <= c2 <= N:
+            validMove.append((r1, c1, r2-1, c2))
+        if 1 <= r2 <= N and 1 <= c2+1 <= N:
+            validMove.append((r1, c1, r2, c2+1))
+        if 1 <= r2 <= N and 1 <= c2-1 <= N:
+            validMove.append((r1, c1, r2, c2-1))
+        if 1 <= r2+2 <= N and 1 <= c2 <= N:
+            validMove.append((r1, c1, r2+2, c2))
+        if 1 <= r2-2 <= N and 1 <= c2 <= N:
+            validMove.append((r1, c1, r2-2, c2))
+        if 1 <= r2 <= N and 1 <= c2+2 <= N:
+            validMove.append((r1, c1, r2, c2+2))
+        if 1 <= r2 <= N and 1 <= c2-2 <= N:
+            validMove.append((r1, c1, r2, c2-2))
+    return validMove
+
+
 
 # reward: 10 for A win, -10 for B win, 0 for draw
 
 
-def minimax(r1, c1, r2, c2, turn1=True, curDepth=1):
+def minimax(r1, c1, r2, c2, turn1=True, curDepth=1,alpha=-INF,beta=INF):
     # game over
     if r1 == r2 and c1 == c2:
         if turn1:
@@ -24,35 +52,21 @@ def minimax(r1, c1, r2, c2, turn1=True, curDepth=1):
         return 0
     # A's turn, maximize
     if turn1:
-        validMove = []
-        if 1 <= r1+1 <= N and 1 <= c1 <= N:
-            validMove.append(minimax(r1+1, c1, r2, c2, False, curDepth+1))
-        if 1 <= r1-1 <= N and 1 <= c1 <= N:
-            validMove.append(minimax(r1-1, c1, r2, c2, False, curDepth+1))
-        if 1 <= r1 <= N and 1 <= c1+1 <= N:
-            validMove.append(minimax(r1, c1+1, r2, c2, False, curDepth+1))
-        if 1 <= r1 <= N and 1 <= c1-1 <= N:
-            validMove.append(minimax(r1, c1-1, r2, c2, False, curDepth+1))
-        return max(validMove)
+        for move in childStates(r1,c1,r2,c2,True):
+            value = minimax(move[0],move[1],move[2],move[3],False,curDepth+1,alpha,beta)
+            if value > alpha:
+                alpha = value
+            if alpha >= beta:
+                break
+        return alpha
     else:
-        validMove = []
-        if 1 <= r2+1 <= N and 1 <= c2 <= N:
-            validMove.append(minimax(r1, c1, r2+1, c2, True, curDepth+1))
-        if 1 <= r2-1 <= N and 1 <= c2 <= N:
-            validMove.append(minimax(r1, c1, r2-1, c2, True, curDepth+1))
-        if 1 <= r2 <= N and 1 <= c2+1 <= N:
-            validMove.append(minimax(r1, c1, r2, c2+1, True, curDepth+1))
-        if 1 <= r2 <= N and 1 <= c2-1 <= N:
-            validMove.append(minimax(r1, c1, r2, c2-1, True, curDepth+1))
-        if 1 <= r2+2 <= N and 1 <= c2 <= N:
-            validMove.append(minimax(r1, c1, r2+2, c2, True, curDepth+1))
-        if 1 <= r2-2 <= N and 1 <= c2 <= N:
-            validMove.append(minimax(r1, c1, r2-2, c2, True, curDepth+1))
-        if 1 <= r2 <= N and 1 <= c2+2 <= N:
-            validMove.append(minimax(r1, c1, r2, c2+2, True, curDepth+1))
-        if 1 <= r2 <= N and 1 <= c2-2 <= N:
-            validMove.append(minimax(r1, c1, r2, c2-2, True, curDepth+1))
-        return min(validMove)
+        for move in childStates(r1,c1,r2,c2,False):
+            value = minimax(move[0],move[1],move[2],move[3],True,curDepth+1,alpha,beta)
+            if value < beta:
+                beta = value
+            if alpha >= beta:
+                break
+        return beta
 
 
 if __name__ == "__main__":
