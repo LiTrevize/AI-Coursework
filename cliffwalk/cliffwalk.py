@@ -300,9 +300,7 @@ if __name__ == "__main__":
 
     sarsa = Sarsa(Env)
     random.seed(529)
-    # qval = np.zeros((2,2,4))
-    # for _ in range(10):
-    #     print(sarsa.policy(qval,np.array([0,0]),0.2))
+    
     sarsa.learning(max_episode_num=350, alpha=0.1, epsilon=0.01)
     sarsa.utility_plot()
     sarsa.policy_plot()
