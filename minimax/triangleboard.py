@@ -1,7 +1,8 @@
-import math
+import copy
 
 INF = 1000
 
+global MOVE_ID
 
 # board size: 4
 
@@ -13,6 +14,7 @@ class TriangleBoard:
     def __init__(self):
         self.board = TriangleBoard.initAllLines()
         self.turnA = 1
+        self.score = [0, 0]
 
     # all lines in a dictionary form
     # i.e. a adjacent list
@@ -34,12 +36,25 @@ class TriangleBoard:
     def setLine(self, x, y):
         if x > y:
             x, y = y, x
-        if self.turnA == 1:
+        if x not in self.board.keys() or y not in self.board[x].keys():
+            print("Invalid move:", x, "and", y, "cannot be connected")
+            return
+        # set on the board
+        if self.turnA:
             self.board[x][y] = 1
-            self.turnA = 0
         else:
             self.board[x][y] = 0
-            self.turnA = 1
+        # check if form a triangle
+        oneMoreTurn = False
+        for tri in TriangleBoard.triangles:
+            if x in tri and y in tri:
+                if self.board[tri[0]][tri[1]] != -1 and self.board[tri[0]][tri[2]] != -1 and \
+                        self.board[tri[1]][tri[2]] != -1:
+                    self.score[self.turnA] += 1
+                    oneMoreTurn = True
+        # set next turn
+        if not oneMoreTurn:
+            self.turnA = not self.turnA
 
     def getEmptyLines(self):
         lines = []
@@ -49,58 +64,58 @@ class TriangleBoard:
                     lines.append((x, y))
         return lines
 
-    # reward: 100 for A win, -100 for B win, 0 for draw
-    def getReward(self):
-        a = 0
-        b = 0
-        for tri in TriangleBoard.triangles:
-            x = self.board[tri[0]][tri[1]]
-            y = self.board[tri[0]][tri[2]]
-            z = self.board[tri[1]][tri[2]]
-            if x == y and y == z:
-                if x == 1:
-                    a += 1
-                else:
-                    b += 1
-        if a > b:
-            return 100
-        elif a < b:
-            return -100
-        else:
-            return 0
-
-    def next(self, line, turnA):
+    def next(self, line):
         next_tb = TriangleBoard()
-        next_tb.board = self.board.copy()
-        next_tb.board[line[0]][line[1]] = turnA
+        next_tb.turnA = self.turnA
+        next_tb.score = self.score.copy()
+        next_tb.board = copy.deepcopy(self.board)
+        # set line
+        next_tb.setLine(line[0], line[1])
+
         return next_tb
 
 
-def minimax(state, turnA=True, alpha=-INF, beta=INF):
+def minimax(state, alpha=-INF, beta=INF):
     lines = state.getEmptyLines()
     # all lines are occupied
+    # get reward: 100 for A win, -100 for B win, 0 for draw
     if not len(lines):
-        return state.getReward()
-        # A's turn, maximize
-    if turnA:
+        if state.score[1] > state.score[0]:
+            return 100
+        if state.score[1] < state.score[0]:
+            return -100
+    # A's turn, maximize
+    if state.turnA:
+        # line = None
+        # value = None
         for line in lines:
-            value = minimax(state.next(line, True), False, alpha, beta)
+            value = minimax(state.next(line), alpha, beta)
+            if 18 - len(lines) + 1 in MOVE_ID:
+                print('Move', 18 - len(lines) + 1, ":", line, value)
             # pruning
             if value > alpha:
                 alpha = value
             if alpha >= beta:
                 break
+        # if 18 - len(lines) + 1 < 9:
+        #     print('Move', 18 - len(lines) + 1, ":", line, value, alpha, beta)
         return alpha
     # B's turn, minimize
     else:
+        # line = None
+        # value = None
         for line in lines:
-            value = minimax(state.next(line, False), True, alpha, beta)
+            value = minimax(state.next(line), alpha, beta)
+            if 18 - len(lines) + 1 in MOVE_ID:
+                print('Move', 18 - len(lines) + 1, ":", line, value)
             # pruning
             if value < beta:
                 beta = value
             if alpha >= beta:
                 break
-    return beta
+        # if 18 - len(lines) + 1 < 9:
+        #     print('Move', 18 - len(lines) + 1, ":", line, value, alpha, beta)
+        return beta
 
 
 def main():
@@ -109,7 +124,7 @@ def main():
     steps = user_in.split()
     for i in range(len(steps) // 2):
         tb.setLine(int(steps[2 * i]), int(steps[2 * i + 1]))
-    value = minimax(tb, tb.turnA)
+    value = minimax(tb)
     print(value)
     if value > 0:
         print('A wins')
@@ -120,4 +135,5 @@ def main():
 
 
 if __name__ == '__main__':
+    MOVE_ID = [8]
     main()
