@@ -1,12 +1,12 @@
 import copy
+import time
 
 INF = 1000
 
-global MOVE_ID
 
 # board size: 4
-
 class TriangleBoard:
+    # all possible combinations of small triangles it may form
     triangles = ((1, 2, 3), (2, 4, 5), (2, 3, 5),
                  (3, 5, 6), (4, 7, 8), (4, 5, 8),
                  (5, 8, 9), (5, 6, 9), (6, 9, 10))
@@ -33,9 +33,12 @@ class TriangleBoard:
                 8: {9: -1},
                 9: {10: -1}}
 
+    # when player (specified by self.turnA) take a new move, adding line (x,y)
     def setLine(self, x, y):
+        # x should be smaller than y as dictionary specifies
         if x > y:
             x, y = y, x
+        # check invalid move
         if x not in self.board.keys() or y not in self.board[x].keys():
             print("Invalid move:", x, "and", y, "cannot be connected")
             return
@@ -44,7 +47,7 @@ class TriangleBoard:
             self.board[x][y] = 1
         else:
             self.board[x][y] = 0
-        # check if form a triangle
+        # check if form a triangle and add scores
         oneMoreTurn = False
         for tri in TriangleBoard.triangles:
             if x in tri and y in tri:
@@ -56,6 +59,7 @@ class TriangleBoard:
         if not oneMoreTurn:
             self.turnA = not self.turnA
 
+    # find all the lines that are empty, i.e. available as the next move
     def getEmptyLines(self):
         lines = []
         for x in self.board.keys():
@@ -64,10 +68,13 @@ class TriangleBoard:
                     lines.append((x, y))
         return lines
 
+    # the next state (whole game state) if player takes step with 'line'
     def next(self, line):
         next_tb = TriangleBoard()
         next_tb.turnA = self.turnA
+        # list needs to copy
         next_tb.score = self.score.copy()
+        # dict needs to deep copy!
         next_tb.board = copy.deepcopy(self.board)
         # set line
         next_tb.setLine(line[0], line[1])
@@ -78,20 +85,23 @@ class TriangleBoard:
 def minimax(state, alpha=-INF, beta=INF):
     lines = state.getEmptyLines()
     # all lines are occupied
-    # get reward: 100 for A win, -100 for B win, 0 for draw
+    # get reward: scoreA - scoreB
     if not len(lines):
-        if state.score[1] > state.score[0]:
-            return 100
-        if state.score[1] < state.score[0]:
-            return -100
+        return state.score[1] - state.score[0]
+    # early stop:
+    # if one player gets more than 5 points
+    # he/she must win. This case is preferred.
+    # So get reward of 5/-5
+    if state.score[1] >= 5:
+        return 10
+    if state.score[0] >= 5:
+        return -10
     # A's turn, maximize
     if state.turnA:
         # line = None
         # value = None
         for line in lines:
             value = minimax(state.next(line), alpha, beta)
-            if 18 - len(lines) + 1 in MOVE_ID:
-                print('Move', 18 - len(lines) + 1, ":", line, value)
             # pruning
             if value > alpha:
                 alpha = value
@@ -106,8 +116,6 @@ def minimax(state, alpha=-INF, beta=INF):
         # value = None
         for line in lines:
             value = minimax(state.next(line), alpha, beta)
-            if 18 - len(lines) + 1 in MOVE_ID:
-                print('Move', 18 - len(lines) + 1, ":", line, value)
             # pruning
             if value < beta:
                 beta = value
@@ -124,7 +132,11 @@ def main():
     steps = user_in.split()
     for i in range(len(steps) // 2):
         tb.setLine(int(steps[2 * i]), int(steps[2 * i + 1]))
+
+    t0 = time.process_time()
     value = minimax(tb)
+    t1 = time.process_time()
+
     print(value)
     if value > 0:
         print('A wins')
@@ -132,8 +144,8 @@ def main():
         print('B wins')
     else:
         print('DRAW')
+    print("Process Time:", t1 - t0)
 
 
 if __name__ == '__main__':
-    MOVE_ID = [8]
     main()
